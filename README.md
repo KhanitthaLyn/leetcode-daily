@@ -1,6 +1,6 @@
-# leetcode-daily
+# leetcode-neetcode-daily
 
-This repo is where I practice LeetCode problems day by day.
+This repo is where I practice LeetCode/NeetCode problems day by day.
 
 The goal is not just to solve the problem, but to practice how I think. For each problem I write down what I learned, how I solved it, what other ways there are to solve it, and which one is better and why.
 
