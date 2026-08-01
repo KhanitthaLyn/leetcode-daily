@@ -1,7 +1,4 @@
 # leetcode-daily
-Daily LeetCode practice with notes on approach &amp; reasoning for each problem 
-
-# leetcode-daily
 
 This repo is where I practice LeetCode problems day by day.
 
