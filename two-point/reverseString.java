@@ -45,7 +45,7 @@ Result: o l l e h ...
 (reversing "hello" gives "olleh")
 ```
 
-## 4. ⚖️ Trade-offs & When to Use
+## 4. Trade-offs & When to Use
 
 - **When to use:** Anytime the problem says "in-place" or "O(1) extra space" — this is the go-to pattern for modifying an array symmetrically from both ends toward the middle.
 - **When NOT to use:** If the input is an immutable string (like a plain Python `str` rather than `list[char]`), you can't do true in-place mutation 
@@ -54,8 +54,8 @@ you'd need to convert to a list first. Also, if space isn't actually constrained
 
 ## 5. Real-World Scenario / Mini Example
 */
-#Python
 
+#Python
 def reverseString(s: list[str]) -> None:
     left, right = 0, len(s) - 1
     while left < right:
@@ -77,6 +77,37 @@ public void reverseString(char[] s) {
         right--;
     }
 }
+
+================
+Input: ["n", "e", "e", "t"]
+
+left=0, right=3
+  swap(s[0], s[3]) -> ["t", "e", "e", "n"]
+  left=1, right=2
+
+left=1, right=2
+  swap(s[1], s[2]) -> ["t", "e", "e", "n"]  (สลับ e กับ e ค่าเหมือนเดิม)
+  left=2, right=1
+
+left >= right -> stop
+
+Output: ["t", "e", "e", "n"]  
+        
+================
+Input: ["r", "a", "c", "e", "c", "a", "r"]
+
+left=0, right=6 -> swap(r,r) -> unchanged, left=1, right=5
+left=1, right=5 -> swap(a,a) -> unchanged, left=2, right=4
+left=2, right=4 -> swap(c,c) -> unchanged, left=3, right=3
+
+left >= right -> stop
+
+Output: ["r", "a", "c", "e", "c", "a", "r"]  
+
+ 
+// **Time:** O(n) — loop - n/2 - linear
+// **Space:** O(1) — variable `left`, `right`, `temp` no parallel input
+        
 /*
 > Note for Java: this uses `char[]` (a primitive array), not `Character[]` or `String` — because `char[]` 
 is truly mutable and avoids the autoboxing overhead we discussed before with `Character` objects.
