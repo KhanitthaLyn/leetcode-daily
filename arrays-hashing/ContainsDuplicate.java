@@ -2,7 +2,7 @@
 //Given an integer array nums, return true if any value appears more than once in the array, otherwise return false
 
 
-//[1] Hash Set - Time: O(n) | Space: O(n)
+//Hash Set - Time: O(n) | Space: O(n)
 import java.util.HashSet;
 
 class Solution {
