@@ -1,62 +1,94 @@
-//Given an array of strings strs, group all anagrams together into sublists. You may return the output in any order.
+/*
+Given an array of strings strs, group all anagrams together into sublists. You may return the output in any order.
+An anagram is a string that contains the exact same characters as another string, but the order of the characters can be different.
 
-//An anagram is a string that contains the exact same characters as another string, but the order of the characters can be different.
+Example 1:
+Input: strs = ["act","pots","tops","cat","stop","hat"]
+Output: [["hat"],["act", "cat"],["stop", "pots", "tops"]]
 
-/* Why Do We Need It?
+Example 2:
+Input: strs = ["x"]
+Output: [["x"]]
 
-If we checked every pair of strings to see if they're anagrams of each other (comparing each string against every other string), that's O(n² × k log k) — way too slow when n can be up to 10,000. We need a way to group everything in a single pass, without doing pairwise comparisons.
-
-The key insight: if we sort the characters of each word, anagrams will produce the exact same resulting string (e.g. "act" → "act", "cat" → "act"). We can use this sorted string as a key in a HashMap to group words together.
-
-How It Works
-Create a HashMap<String, List<String>> to hold the groups
-Loop through every word in strs
-Sort the characters of that word to get a "key" (e.g. "tops" → "opst")
-Use that key to look up the map — if it doesn't exist yet, create a new list; if it does, add to the existing list
-Return all the values (lists) from the map
-
-Complexity: Time O(n × k log k) — n is the number of words, k is the average word length (since we sort each word). Space O(n × k) to store everything in the map.
-
-When to Use
-When to use: Whenever you need to group data by some "signature" that's invariant to ordering (permutation-invariant grouping) — anagrams are the classic example.
-When NOT to use: If words are very long (large k), sorting every word gets expensive. In that case, use a different key strategy instead.
-Trade-offs:
-Sort-as-key approach (shown above): simple to write and understand, but sorting costs O(k log k)
-Character-count-as-key approach (count frequency of a-z into an array, then convert to a string like "1#0#0...#1"): gets you O(k) per word — faster when k is large — but the code is slightly more complex and the key is always a fixed 26-length representation even for short words
-
-This pattern shows up often when you need to "group data by fingerprint" — for example, deduplicating documents that have the same content but different formatting (using a hash of the normalized content as the key), or grouping log events that share the same fields but in different JSON key order.
+Constraints:
+    1 <= strs.length <= 10000.
+    0 <= strs[i].length <= 100
+    strs[i] is made up of lowercase English letters.
 */
 
-public class Solution {
+class Solution {
     public List<List<String>> groupAnagrams(String[] strs) {
-        Map<String, List<String>> res = new HashMap<>();
+        Map<String, List<String>> map = new HashMap<>();
+        
         for (String s : strs) {
-            char[] charArray = s.toCharArray();
-            Arrays.sort(charArray);
-            String sortedS = new String(charArray);
-            res.putIfAbsent(sortedS, new ArrayList<>());
-            res.get(sortedS).add(s);
+            char[] chars = s.toCharArray();
+            Arrays.sort(chars);
+            String key = new String(chars);
+            
+            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
         }
-        return new ArrayList<>(res.values());
+        
+        return new ArrayList<>(map.values());
     }
 }
 
+/*
+Naive approach: Compare every word against every other word to check if they're anagrams (requires sorting or counting characters on every comparison) 
+→ O(n² · k), where n is the number of words and k is the average word length.
 
-/*Same logic, just a different way of inserting into the map.
+The problem: with n ≤ 10000, comparing every pair means ~10^8 comparisons, on top of the string sort/compare cost each time — too slow.
+Key insight: If two strings are anagrams of each other, they share some "key" that is exactly identical, such as:
 
-**Same:**
-- Sort characters of each word to form the key, group using HashMap
-- Time complexity O(n × k log k), Space O(n × k) — identical
-- 100% identical output
+The sorted string ("tops" → "opst", "stop" → "opst" — identical!)
+Or a character frequency count (how many a's, b's, c's, ... z's appear)
 
-Both work the same way, but there are a couple of minor differences:
+Once you have a matching key, you can use a HashMap to group them instantly in O(1) per word (excluding the cost of building the key) 
+→ the whole thing finishes in O(n · k) or O(n · k log k) if you use sorting to build the key.
 
-1. **Number of hash lookups** — `computeIfAbsent` does a single lookup (check + insert/retrieve in one operation). `putIfAbsent` + `get` does **two** lookups (one to check/insert, another to retrieve the list). 
-This doesn't change the Big-O, but `computeIfAbsent` is slightly faster in practice due to a smaller constant factor.
 
-2. **Wasted object creation** — `putIfAbsent(sortedS, new ArrayList<>())` creates a new `ArrayList` on every iteration, even when the key already exists 
-that unused list just gets discarded and garbage collected. `computeIfAbsent` only creates a new ArrayList when the key is genuinely absent. Minor overhead, doesn't affect correctness.
+Core idea: use a HashMap<String, List<String>> where the key is the "anagram signature" (here, the sorted string) and the value is the list of words sharing that key.
 
-3. **Readability** — second version is arguably a bit easier to follow for someone unfamiliar with `computeIfAbsent`, since each step is explicit.
+Step-by-step:
+Create an empty HashMap<String, List<String>>
+Loop through each word s in strs:
+Convert s to a char array and sort the characters → get a standardized key (e.g. "tops" → "opst")
+Use that key to find/create a list in the map and add the original word s (not the sorted version) to it
+Return map.values() converted to a List<List<String>>
 
-Bottom line: both are correct and will pass all test cases. The difference is a micro-optimization (constant factor), not Big-O. For production code, `computeIfAbsent` is generally preferred since it's more concise and has slightly less overhead. */
+Complexity:
+Time: O(n · k log k) — n words, each sorted in O(k log k) where k = word length
+Space: O(n · k) — storing every word in the map
+
+
+When to use: Almost always — this is the standard pattern for "grouping items by a shared property"
+Alternative: use a character-count key instead of sorting
+Instead of sorting letters, count the frequency of each letter (since the problem guarantees lowercase English letters only 
+→ just 26 possible characters), then encode it as a string like "1#0#0#...#2" (count of a, count of b, ..., count of z)
+
+Time: O(n · k) — faster, since you skip sorting (drops the log k factor)
+Trade-off: slightly more complex code (you build the encoding yourself), but genuinely faster when k is large
+When NOT to use the sorted-key approach: if the average word length is very long (large k), sorting every word becomes the bottleneck → switch to character counting instead
+Main trade-off: ease of writing (sorted key is simpler to read) versus a small performance cost (the log k factor) —
+for k ≤ 100 as given in this problem, the difference is negligible, so the sorted key is perfectly fine to use
+
+Mini Example
+This pattern — "build a canonical key to group things that look different but are actually the same" — shows up constantly in real work:
+
+Deduplicating data that looks different but has the same content: e.g. normalizing addresses before comparing them for duplicates (trim whitespace, lowercase, sort tokens)
+File content fingerprinting: checking whether two files have identical content regardless of metadata (using a hash of the content as the key)
+
+Trace example with strs = ["act","pots","tops","cat","stop","hat"]:
+"act" → sorted "act" → map: {"act": ["act"]}
+"pots" → sorted "opst" → map: {"act": ["act"], "opst": ["pots"]}
+"tops" → sorted "opst" → map: {"act": ["act"], "opst": ["pots","tops"]}
+"cat" → sorted "act" → map: {"act": ["act","cat"], "opst": ["pots","tops"]}
+"stop" → sorted "opst" → map: {"act": ["act","cat"], "opst": ["pots","tops","stop"]}
+"hat" → sorted "aht" → map: {"act": ["act","cat"], "opst": [...], "aht": ["hat"]}
+Result: [["act","cat"], ["pots","tops","stop"], ["hat"]]  (order may vary since HashMap doesn't guarantee ordering — the problem allows any order)
+
+
+Golden Rule: When a problem asks you to "group things that look different but share some underlying property," 
+find a way to build a canonical key (a standardized signature) so that items belonging together produce the exact same key, then throw them into a HashMap. 
+This technique generalizes far beyond anagrams — dedup, clustering, and matching problems all use the same idea.
+
+*/
